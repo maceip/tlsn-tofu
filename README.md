@@ -8,6 +8,8 @@
     ⚠️ not for production ⚠️ 
 </p>  
 
+tlsn-tofu was born as a reference for simple and secure infra for tlsnotary to leverage secure enclaves, and to demonstrate how to use their most important (and complex) feature: remote attestation!
+
 ### quick start:
 
 clone this repo; cd into it, then: 
