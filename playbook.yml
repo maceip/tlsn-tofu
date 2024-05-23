@@ -9,15 +9,19 @@
     - setup:
 
     - name: rustup installer
+      become: true
+      become_user: ubuntu
       get_url:
         url: https://sh.rustup.rs
-        dest: /tmp/sh.rustup.rs
+        dest: ~/sh.rustup.rs
         mode: "0755"
         force: "yes"
       tags:
         - rust
     - name: install rust/cargo
-      shell: /tmp/sh.rustup.rs -y
+      become: true
+      become_user: ubuntu
+      shell: ~/sh.rustup.rs -y
       tags:
         - rust
     - name: Update and upgrade apt packages
@@ -50,6 +54,20 @@
       become: true
       apt:
         update_cache: yes
+    - name: install nodejs first, else intels PCCS installer barfs
+      become: true
+      ansible.builtin.shell:
+        cmd: curl -fsSL https://deb.nodesource.com/setup_18.x -o nodesource_setup.sh
+
+    - name: run nodesource setup
+      become: true
+      ansible.builtin.shell:
+        cmd: bash nodesource_setup.sh
+
+    - name: run install
+      become: true
+      ansible.builtin.shell:
+        cmd: apt-get install -y  --allow-downgrades nodejs=18.19.1-1nodesource1
 
     - name: install libs
       become: true
@@ -66,6 +84,43 @@
           - sgx-dcap-pccs
           - libsgx-dcap-quote-verify-dev
           - libsgx-urts
+          - cracklib-runtime
+    - name: switch to DCAP
+      become: true
+      ansible.builtin.lineinfile:
+        path: /etc/aesmd.conf
+        regexp: "^#default quoting type = ecdsa_256"
+        line: "default quoting type = ecdsa_256"
+    - name: change cache mode
+      become: true
+      ansible.builtin.lineinfile:
+        path: /opt/intel/sgx-dcap-pccs/config/default.json
+        regexp: '^    "CachingFillMode" : "LAZY",'
+        line: '    "CachingFillMode" : "REQ",'
+    - name: add api key
+      become: true
+      ansible.builtin.lineinfile:
+        path: /opt/intel/sgx-dcap-pccs/config/default.json
+        regexp: '^    "ApiKey": "",'
+        line: '    "ApiKey": "04563875831446309d6530a1279513b9",'
+    - name: gen pccs certs
+      become: true
+      ansible.builtin.shell:
+        cmd: mkdir ssl_key &&  openssl genrsa -out ssl_key/private.pem 2048 &&  openssl req -new -key ssl_key/private.pem -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=aol.com" -out ssl_key/csr.pem && openssl x509 -req -days 365 -in ssl_key/csr.pem -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=aol.com" -signkey ssl_key/private.pem -out ssl_key/file.crt
+        chdir: /opt/intel/sgx-dcap-pccs
+
+    - name: Copy a new "ntp.conf" file into place, backing up the original if it differs from the copied version
+      ansible.builtin.copy:
+        src: azure/cpl.conf
+        dest: /etc/sgx_default_qcnl.conf
+        owner: root
+        group: root
+
+    - name: run nodesource setup
+      become: true
+      ansible.builtin.shell:
+        cmd: systemctl restart aesmd.service
+
     - name: check for SGX support
       command: is-sgx-available
       ignore_errors: true
@@ -79,6 +134,8 @@
       ignore_errors: true
       register: sgxstatus
     - name: clone notary server
+      become: true
+      become_user: ubuntu
       ignore_errors: true
       git:
         repo: https://github.com/maceip/sgx-tlsn-notary-server.git
@@ -86,24 +143,26 @@
         clone: yes
         update: yes
     - name: make repo
+      become: true
+      become_user: ubuntu
       environment:
         SGX: "1"
         PATH: "/home/ubuntu/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:{{ ansible_env.PATH }}"
       command: make
       args:
-         chdir: /home/ubuntu/sgx-tlsn-notary-server
+        chdir: /home/ubuntu/sgx-tlsn-notary-server
       register: makestatus
     - name: print make status
       ansible.builtin.debug:
         msg: Notary Build Status {{ makestatus }}
       when: makestatus is defined
     - name: run verifier
+      become: true
+      become_user: ubuntu
       environment:
         SGX: "1"
         PATH: "/home/ubuntu/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:{{ ansible_env.PATH }}"
       command: gramine-sgx sgx-notary-server
       args:
-         chdir: /home/ubuntu/sgx-tlsn-notary-server
+        chdir: /home/ubuntu/sgx-tlsn-notary-server
       register: servicestatus
-
-
