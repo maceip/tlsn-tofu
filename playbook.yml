@@ -105,13 +105,14 @@
         line: '    "ApiKey": "04563875831446309d6530a1279513b9",'
     - name: gen pccs certs
       become: true
+      ignore_errors: true
       ansible.builtin.shell:
         cmd: mkdir ssl_key &&  openssl genrsa -out ssl_key/private.pem 2048 &&  openssl req -new -key ssl_key/private.pem -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=aol.com" -out ssl_key/csr.pem && openssl x509 -req -days 365 -in ssl_key/csr.pem -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=aol.com" -signkey ssl_key/private.pem -out ssl_key/file.crt
         chdir: /opt/intel/sgx-dcap-pccs
 
-    - name: Copy a new "ntp.conf" file into place, backing up the original if it differs from the copied version
+    - name: use azure PCCS
       ansible.builtin.copy:
-        src: azure/cpl.conf
+        src: azure/sgx_default_qcnl.conf
         dest: /etc/sgx_default_qcnl.conf
         owner: root
         group: root
@@ -158,7 +159,6 @@
       when: makestatus is defined
     - name: run verifier
       become: true
-      become_user: ubuntu
       environment:
         SGX: "1"
         PATH: "/home/ubuntu/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:{{ ansible_env.PATH }}"
