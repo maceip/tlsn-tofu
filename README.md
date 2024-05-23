@@ -2,8 +2,9 @@
     <img src="./tlsn-banner.png" width=1280 />
 </p>
 
-<center><h2>One-click Trusted Execution Environment For TLSNotary</h2></center>
-  
+<p align="center">
+<b>One-click Trusted Execution Environment For TLSNotary</b>
+</p>  
 
 ### quick start:
 
@@ -36,12 +37,31 @@ brew update && brew install ansible
 ```
 - debian/ubuntu linux:
 ```
-sudo apt-add-repository ppa:ansible/ansible && sudo apt update && sudo apt install ansible```
+sudo apt-add-repository ppa:ansible/ansible && sudo apt update && sudo apt install ansible
 ```
 #### 6) ansible magic:
 
 ```
 ansible-playbook -vvv -i inventory.yml playbook.yml
 ```
-#### 7) confetti: 🎉you just ran code inside a TEE!🎉
 
+#### 7) tear it down:
+
+```
+tofu destroy
+```
+
+#### 8) confetti: 🎉you just ran code inside a TEE!🎉
+
+<h3>Notes</h3>
+
+-  This repo utilizes open tofu to provision TEE capable hardware across various cloud providers. Currently, it only supports a single notary running inside SGX via Gramine on Azure. 
+
+-  The hardware is configured with Ansible, and sets up SGX Remote Attestation (DCAP /w ECDSA), a Provisioning Certificate Caching Service, and a development gramine key.
+
+-  inspect the cloud configuration via:
+   - ```tofu show```
+-  to see the ansible-host that tofu created, run:
+   - ```ansible-playbook -i inventory.yml playbook.yml   --list-hosts```
+
+###### tofu creates a ssh key in ```~/.ssh/${var.resource_group_name_prefix}-sshkey.pem"```. This key is not removed when you use tofu destroy, but it will be rotated automatically.
