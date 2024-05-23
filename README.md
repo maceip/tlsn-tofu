@@ -4,6 +4,8 @@
 
 <p align="center">
 <b>One-click Trusted Execution Environment For TLSNotary</b>
+    <br>
+    ⚠️ not for production ⚠️ 
 </p>  
 
 ### quick start:
@@ -64,4 +66,4 @@ tofu destroy
 -  to see the ansible-host that tofu created, run:
    - ```ansible-playbook -i inventory.yml playbook.yml   --list-hosts```
 
-###### tofu creates a ssh key in ```~/.ssh/${var.resource_group_name_prefix}-sshkey.pem"```. This key is not removed when you use tofu destroy, but it will be rotated automatically.
+###### tofu creates a ssh key in ```~/.ssh/${var.resource_group_name_prefix}-sshkey.pem"```. This key is deleted when you use tofu destroy!
