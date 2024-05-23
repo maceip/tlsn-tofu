@@ -37,7 +37,7 @@ brew update && brew install ansible
 ```
 - debian/ubuntu linux:
 ```
-sudo apt-add-repository ppa:ansible/ansible && sudo apt update && sudo apt install ansible```
+sudo apt-add-repository ppa:ansible/ansible && sudo apt update && sudo apt install ansible
 ```
 #### 6) ansible magic:
 
