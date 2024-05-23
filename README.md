@@ -35,11 +35,11 @@ tofu plan && tofu apply
 #### 5) install ansible:
 - mac:
 ```
-brew update && brew install ansible
+brew update && brew install ansible && ansible-galaxy collection install cloud.terraform
 ```
 - debian/ubuntu linux:
 ```
-sudo apt-add-repository ppa:ansible/ansible && sudo apt update && sudo apt install ansible
+sudo apt-add-repository ppa:ansible/ansible && sudo apt update && sudo apt install ansible && ansible-galaxy collection install cloud.terraform
 ```
 #### 6) ansible magic:
 
