@@ -58,9 +58,14 @@
         pkg:
           - libsgx-dcap-ql
           - libsgx-dcap-default-qpl=1.16.100.2-jammy1
+          - libsgx-launch
           - gramine
           - cmake
           - clang
+          - sqlite3
+          - sgx-dcap-pccs
+          - libsgx-dcap-quote-verify-dev
+          - libsgx-urts
     - name: check for SGX support
       command: is-sgx-available
       ignore_errors: true
@@ -69,7 +74,12 @@
       ansible.builtin.debug:
         msg: SGX Status {{ sgxstatus }}
       when: sgxstatus is defined
+    - name: install gramine key
+      command: gramine-sgx-gen-private-key
+      ignore_errors: true
+      register: sgxstatus
     - name: clone notary server
+      ignore_errors: true
       git:
         repo: https://github.com/maceip/sgx-tlsn-notary-server.git
         dest: /home/ubuntu/sgx-tlsn-notary-server
@@ -87,3 +97,13 @@
       ansible.builtin.debug:
         msg: Notary Build Status {{ makestatus }}
       when: makestatus is defined
+    - name: run verifier
+      environment:
+        SGX: "1"
+        PATH: "/home/ubuntu/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:{{ ansible_env.PATH }}"
+      command: gramine-sgx sgx-notary-server
+      args:
+         chdir: /home/ubuntu/sgx-tlsn-notary-server
+      register: servicestatus
+
+
