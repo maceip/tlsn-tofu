@@ -4,6 +4,8 @@
 
 <p align="center">
 <b>One-click Trusted Execution Environment For TLSNotary</b>
+    <br>
+    ⚠️ not for production ⚠️ 
 </p>  
 
 ### quick start:
