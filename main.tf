@@ -1,3 +1,72 @@
+
+data "azurerm_client_config" "current" {}
+
+resource "azurerm_key_vault" "main" {
+  name                = "${var.resource_group_name_prefix}-vault"
+  location                    = azurerm_resource_group.main.location
+  resource_group_name         = azurerm_resource_group.main.name
+  enabled_for_disk_encryption = true
+  tenant_id                   = data.azurerm_client_config.current.tenant_id
+  soft_delete_retention_days  = 7
+  purge_protection_enabled    = false
+
+  sku_name = "standard"
+
+  access_policy {
+    tenant_id = data.azurerm_client_config.current.tenant_id
+    object_id = data.azurerm_client_config.current.object_id
+
+     secret_permissions = [
+      "Set",
+      "Get",
+      "Delete",
+      "List",
+      "Purge",
+      "Recover"
+    ]
+
+    key_permissions = [
+      "Create",
+      "Delete",
+      "List",
+      "Get",
+      "Purge",
+      "Recover",
+      "Update",
+      "GetRotationPolicy",
+      "SetRotationPolicy"
+    ]
+  }
+}
+
+resource "tls_private_key" "ssh" {
+  algorithm = "RSA"
+}
+
+
+resource "azurerm_key_vault_secret" "main" {
+  name                = "${var.resource_group_name_prefix}-sshkey"
+  value        = tls_private_key.ssh.private_key_pem
+  key_vault_id = azurerm_key_vault.main.id
+}
+
+data "azurerm_key_vault_secret" "main" {
+  name                = "${var.resource_group_name_prefix}-sshkey"
+  key_vault_id = azurerm_key_vault.main.id
+}
+
+resource "local_sensitive_file" "pem_file" {
+  filename = pathexpand("~/.ssh/${var.resource_group_name_prefix}-sshkey.pem")
+  file_permission = "600"
+  directory_permission = "700"
+  content = tls_private_key.ssh.private_key_pem
+}
+
+output "secret_value" {
+  value     = data.azurerm_key_vault_secret.main.value
+  sensitive = true
+}
+
 resource "random_pet" "rg_name" {
   prefix = var.resource_group_name_prefix
 }
@@ -42,6 +111,8 @@ resource "azurerm_public_ip" "main" {
   allocation_method   = "Dynamic"
 }
 
+
+
 resource "azurerm_linux_virtual_machine" "main" {
   name                = "${var.resource_group_name_prefix}-vm"
   resource_group_name = azurerm_resource_group.main.name
@@ -55,7 +126,7 @@ resource "azurerm_linux_virtual_machine" "main" {
 
   admin_ssh_key {
     username   = "ubuntu"
-    public_key = file("~/.ssh/id_rsa.pub")
+        public_key =  tls_private_key.ssh.public_key_openssh 
   }
 
   source_image_reference {
@@ -68,5 +139,19 @@ resource "azurerm_linux_virtual_machine" "main" {
   os_disk {
     storage_account_type = "Standard_LRS"
     caching              = "ReadWrite"
+  }
+}
+
+output "ip_address" {
+  value = azurerm_public_ip.main.ip_address
+}
+
+resource "ansible_host" "main" {
+  name                = azurerm_public_ip.main.ip_address
+  groups = ["sgx"]
+  variables = {
+    ansible_user                 = "ubuntu",
+    ansible_ssh_private_key_file = "~/.ssh/${var.resource_group_name_prefix}-sshkey.pem",
+    ansible_python_interpreter   = "/usr/bin/python3",
   }
 }

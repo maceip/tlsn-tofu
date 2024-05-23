@@ -1,3 +1,0 @@
-sudo apt install unzip
-curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-az quota update --resource-name standardDCSv3Family --scope /subscriptions/9e31e3ad-0fc1-40e0-b40c-312fc5bf5095/providers/Microsoft.Compute/locations/eastus --limit-object value=4 --resource-type dedicated
