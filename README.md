@@ -23,13 +23,11 @@ curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 #### 3) install open tofu:
 
 ```
-chmod +x ./install_tofu.sh
-./install_tofu.sh
+chmod +x ./install_tofu.sh && bash ./install_tofu.sh
 ```
 #### 4) tofu magic:
 ```
-tofu plan
-tofu apply
+tofu plan && tofu apply
 ```
 #### 5) install ansible:
 - mac:
