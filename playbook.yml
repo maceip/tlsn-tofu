@@ -90,6 +90,8 @@
         msg: SGX Status {{ sgxstatus }}
       when: sgxstatus is defined
     - name: install gramine key
+      become: true
+      become_user: ubuntu
       command: gramine-sgx-gen-private-key
       ignore_errors: true
       register: sgxstatus
