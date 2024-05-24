@@ -68,7 +68,13 @@ tofu destroy
 ```
 
 #### 8) confetti: 🎉you just ran a tlsnotary verifier inside a TEE!🎉
-
+### TODO
+- [x] Azure
+- [x] Azure THIM DCAP
+- [x] PCCS
+- [ ] Remote Attestation Demo
+- [ ] TDX
+- [ ] SEV-SNP
 <h3>Notes</h3>
 
 -  This repo utilizes open tofu to provision TEE capable hardware across various cloud providers. Currently, it only supports a single notary running inside SGX via Gramine on Azure. 
