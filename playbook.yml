@@ -54,20 +54,6 @@
       become: true
       apt:
         update_cache: yes
-    - name: install nodejs first, else intels PCCS installer barfs
-      become: true
-      ansible.builtin.shell:
-        cmd: curl -fsSL https://deb.nodesource.com/setup_18.x -o nodesource_setup.sh
-
-    - name: run nodesource setup
-      become: true
-      ansible.builtin.shell:
-        cmd: bash nodesource_setup.sh
-
-    - name: run install
-      become: true
-      ansible.builtin.shell:
-        cmd: apt-get install -y  --allow-downgrades nodejs=18.19.1-1nodesource1
 
     - name: install libs
       become: true
@@ -81,34 +67,7 @@
           - cmake
           - clang
           - sqlite3
-          - sgx-dcap-pccs
           - libsgx-dcap-quote-verify-dev
-          - libsgx-urts
-          - cracklib-runtime
-    - name: switch to DCAP
-      become: true
-      ansible.builtin.lineinfile:
-        path: /etc/aesmd.conf
-        regexp: "^#default quoting type = ecdsa_256"
-        line: "default quoting type = ecdsa_256"
-    - name: change cache mode
-      become: true
-      ansible.builtin.lineinfile:
-        path: /opt/intel/sgx-dcap-pccs/config/default.json
-        regexp: '^    "CachingFillMode" : "LAZY",'
-        line: '    "CachingFillMode" : "REQ",'
-    - name: add api key
-      become: true
-      ansible.builtin.lineinfile:
-        path: /opt/intel/sgx-dcap-pccs/config/default.json
-        regexp: '^    "ApiKey": "",'
-        line: '    "ApiKey": "04563875831446309d6530a1279513b9",'
-    - name: gen pccs certs
-      become: true
-      ignore_errors: true
-      ansible.builtin.shell:
-        cmd: mkdir ssl_key &&  openssl genrsa -out ssl_key/private.pem 2048 &&  openssl req -new -key ssl_key/private.pem -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=aol.com" -out ssl_key/csr.pem && openssl x509 -req -days 365 -in ssl_key/csr.pem -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=aol.com" -signkey ssl_key/private.pem -out ssl_key/file.crt
-        chdir: /opt/intel/sgx-dcap-pccs
 
     - name: use azure PCCS
       ansible.builtin.copy:
@@ -117,7 +76,7 @@
         owner: root
         group: root
 
-    - name: run nodesource setup
+    - name: restart aesmd service
       become: true
       ansible.builtin.shell:
         cmd: systemctl restart aesmd.service
@@ -153,9 +112,20 @@
       args:
         chdir: /home/ubuntu/sgx-tlsn-notary-server
       register: makestatus
+
+    - name: print sigstruct
+      become: true
+      become_user: ubuntu
+      environment:
+        SGX: "1"
+        PATH: "/home/ubuntu/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:{{ ansible_env.PATH }}"
+      command: gramine-sgx-sigstruct-view --verbose --output-format=toml sgx-notary-server.sig
+      args:
+        chdir: /home/ubuntu/sgx-tlsn-notary-server
+      register: sigstruct
     - name: print make status
       ansible.builtin.debug:
-        msg: Notary Build Status {{ makestatus }}
+        msg: Notary Build Status {{ makestatus }} Sigstruct {{ sigstruct }}
       when: makestatus is defined
     - name: run verifier
       become: true
