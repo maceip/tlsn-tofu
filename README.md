@@ -46,6 +46,14 @@ this will create an azure resource group, a vm suitable for SGX, an azure vault,
 ```
 tofu init && tofu plan && tofu apply
 ```
+if all is well, tofu will ask you to confirm:<br>
+
+
+<p align="center">
+    <img src="./tofu_plan.png" width=476 />
+</p>
+
+type yes and hit enter
 
 #### 6) run ansible:
 this will configure the vm created above:
