@@ -50,7 +50,7 @@ tofu init && tofu plan && tofu apply
 #### 6) run ansible:
 this will configure the vm created above:
 ```
-ansible-playbook -vvv -i inventory.yml playbook.yml
+ansible-playbook -i inventory.yml playbook.yml
 ```
 
 #### 7) tear it down:
