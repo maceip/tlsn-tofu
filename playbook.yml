@@ -121,7 +121,7 @@
       environment:
         SGX: "1"
         PATH: "/home/ubuntu/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:{{ ansible_env.PATH }}"
-      command: gramine-sgx-sigstruct-view--output-format=toml sgx-notary-server.sig
+      command: gramine-sgx-sigstruct-view --output-format=toml sgx-notary-server.sig
       args:
         chdir: /home/ubuntu/sgx-tlsn-notary-server
       register: sigstruct
