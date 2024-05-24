@@ -8,6 +8,8 @@
     ⚠️ not for production ⚠️ 
 </p>  
 
+tlsn-tofu was born as a reference for simple and secure infra for tlsnotary to leverage secure enclaves, and to demonstrate how to use their most important (and complex) feature: remote attestation!
+
 ### quick start:
 
 clone this repo; cd into it, then: 
@@ -28,11 +30,8 @@ curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 ```
 chmod +x ./install_tofu.sh && bash ./install_tofu.sh
 ```
-#### 4) tofu magic:
-```
-tofu plan && tofu apply
-```
-#### 5) install ansible:
+
+#### 4) install ansible and the terraform extension:
 - mac:
 ```
 brew update && brew install ansible && ansible-galaxy collection install cloud.terraform
@@ -41,6 +40,12 @@ brew update && brew install ansible && ansible-galaxy collection install cloud.t
 ```
 sudo apt-add-repository ppa:ansible/ansible && sudo apt update && sudo apt install ansible && ansible-galaxy collection install cloud.terraform
 ```
+
+#### 5) tofu magic:
+```
+tofu plan && tofu apply
+```
+
 #### 6) ansible magic:
 
 ```
@@ -53,7 +58,7 @@ ansible-playbook -vvv -i inventory.yml playbook.yml
 tofu destroy
 ```
 
-#### 8) confetti: 🎉you just ran code inside a TEE!🎉
+#### 8) confetti: 🎉you just ran a tlsnotary verifier inside a TEE!🎉
 
 <h3>Notes</h3>
 
