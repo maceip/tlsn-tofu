@@ -42,7 +42,7 @@ sudo apt-add-repository ppa:ansible/ansible && sudo apt update && sudo apt insta
 ```
 
 #### 5) configure tofo:
-this will create an azure resource group, a vm suitable for SGX, an azure vault, and an SSH key:
+this will create an azure resource group, a vm suitable for SGX, and an SSH key:
 ```
 tofu init && tofu plan && tofu apply
 ```
