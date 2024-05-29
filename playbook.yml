@@ -137,6 +137,8 @@
         msg: Notary Build Status {{ makestatus }} Sigstruct {{ sigstruct }}
       when: makestatus is defined
     - name: run verifier
+      async: 1000 # run verifier for 16 minutes
+      poll: 0
       become: true
       environment:
         SGX: "1"
@@ -144,7 +146,11 @@
       command: gramine-sgx sgx-notary-server
       args:
         chdir: /home/ubuntu/sgx-tlsn-notary-server
-      register: servicestatus
+      register: verifierstatus
+    - name: Clean up async verifier job
+      ansible.builtin.async_status:
+        jid: '{{ verifierstatus.ansible_job_id }}'
+        mode: cleanup
 - name: Install deps on prover
   hosts: prover
   become: true
