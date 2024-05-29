@@ -188,6 +188,7 @@
         pkg:
           - cmake
           - clang
+          - libssl-dev 
     - name: clone notary server
       become: true
       become_user: ubuntu
@@ -198,7 +199,23 @@
         clone: yes
         update: yes
         force: yes
-    - name: make repo
+        single_branch: yes
+        version: dev
+    - name: set notary host
+      ansible.builtin.lineinfile:
+         path: /home/ubuntu/tlsn/tlsn/examples/twitter/twitter_dm.rs
+         regexp: '^const NOTARY_HOST'
+         line: 'const NOTARY_HOST: &str = "74.235.218.81";' #fixme: get the verifier ip from terraform
+    - name: set env
+      become: true
+      become_user: ubuntu
+      environment:
+        PATH: "/home/ubuntu/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:{{ ansible_env.PATH }}"
+      command: cp .env.example .env
+      args:
+        chdir: /home/ubuntu/tlsn/tlsn/examples/twitter
+      register: envcopy
+    - name: run prover
       become: true
       become_user: ubuntu
       environment:
