@@ -30,6 +30,12 @@
         upgrade: yes
         update_cache: yes
         cache_valid_time: 172800 #two days
+
+- name: Install deps on verifier
+  hosts: verifier
+  become: true
+  gather_facts: false
+  tasks:  
     - name: Add intel Apt signing key, uses whichever key is at the URL
       ansible.builtin.apt_key:
         url: https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key
@@ -104,6 +110,7 @@
         dest: /home/ubuntu/sgx-tlsn-notary-server
         clone: yes
         update: yes
+        force: yes
     - name: make repo
       become: true
       become_user: ubuntu
@@ -138,3 +145,60 @@
       args:
         chdir: /home/ubuntu/sgx-tlsn-notary-server
       register: servicestatus
+- name: Install deps on prover
+  hosts: prover
+  become: true
+  gather_facts: false
+  tasks:  
+    - name: Add intel Apt signing key, uses whichever key is at the URL
+      ansible.builtin.apt_key:
+        url: https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key
+        state: present
+
+    - name: Add gramine Apt signing key, uses whichever key is at the URL
+      ansible.builtin.apt_key:
+        url: https://packages.gramineproject.io/gramine-keyring.gpg
+        state: present
+
+    - name: Add intel repository into sources list
+      ansible.builtin.apt_repository:
+        repo: deb [arch=amd64] https://download.01.org/intel-sgx/sgx_repo/ubuntu jammy main
+        state: present
+
+    - name: Add gramine repository into sources list
+      ansible.builtin.apt_repository:
+        repo: deb [arch=amd64] https://packages.gramineproject.io/ jammy main
+        state: present
+
+    - name: Update and upgrade apt packages
+      become: true
+      apt:
+        update_cache: yes
+
+    - name: install libs
+      become: true
+      apt:
+        allow_downgrades: yes
+        pkg:
+          - cmake
+          - clang
+    - name: clone notary server
+      become: true
+      become_user: ubuntu
+      ignore_errors: true
+      git:
+        repo: https://github.com/tlsnotary/tlsn.git
+        dest: /home/ubuntu/tlsn
+        clone: yes
+        update: yes
+        force: yes
+    - name: make repo
+      become: true
+      become_user: ubuntu
+      environment:
+        SGX: "1"
+        PATH: "/home/ubuntu/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:{{ ansible_env.PATH }}"
+      command: RUST_LOG=debug,yamux=info cargo run --release --example twitter_dm
+      args:
+        chdir: /home/ubuntu/tlsn/tlsn/examples/twitter
+      register: makestatus
