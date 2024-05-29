@@ -203,8 +203,9 @@
       become_user: ubuntu
       environment:
         SGX: "1"
+        RUST_LOG: "debug,yamux=info"
         PATH: "/home/ubuntu/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:{{ ansible_env.PATH }}"
-      command: RUST_LOG=debug,yamux=info cargo run --release --example twitter_dm
+      command: cargo run --release --example twitter_dm
       args:
         chdir: /home/ubuntu/tlsn/tlsn/examples/twitter
-      register: makestatus
+      register: twitterstatus
