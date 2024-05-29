@@ -156,7 +156,7 @@ output "prover_ip_address" {
 
 resource "ansible_host" "verifier" {
   name                = azurerm_public_ip.main.ip_address
-  groups = ["sgx"]
+  groups = ["sgx", "verifier"]
   variables = {
     ansible_user                 = "ubuntu",
     ansible_ssh_private_key_file = "~/.ssh/${var.resource_group_name_prefix}-sshkey.pem",
@@ -166,7 +166,7 @@ resource "ansible_host" "verifier" {
 
 resource "ansible_host" "prover" {
   name                = azurerm_public_ip.prover.ip_address
-  groups = ["sgx"]
+  groups = ["sgx","prover"]
   variables = {
     ansible_user                 = "ubuntu",
     ansible_ssh_private_key_file = "~/.ssh/${var.resource_group_name_prefix}-sshkey.pem",
