@@ -41,8 +41,8 @@ brew update && brew install ansible && ansible-galaxy collection install cloud.t
 sudo apt-add-repository ppa:ansible/ansible && sudo apt update && sudo apt install ansible && ansible-galaxy collection install cloud.terraform
 ```
 
-#### 5) configure tofo:
-this will create an azure resource group, a vm suitable for SGX, and an SSH key:
+#### 5) configure tofu:
+this will create an azure resource group, a vm suitable for SGX to be the verifier, and vm to be the prover, and an SSH key:
 ```
 tofu init && tofu plan && tofu apply
 ```
@@ -56,7 +56,7 @@ if all is well, tofu will ask you to confirm:<br>
 type yes and hit enter
 
 #### 6) run ansible:
-this will configure the vm created above:
+this will configure the two vms created above:
 ```
 ansible-playbook -i inventory.yml playbook.yml
 ```
