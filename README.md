@@ -87,3 +87,8 @@ tofu destroy
    - ```ansible-playbook -i inventory.yml playbook.yml   --list-hosts```
 
 ###### tofu creates a ssh key in ```~/.ssh/${var.resource_group_name_prefix}-sshkey.pem"```. This key is deleted when you use tofu destroy!
+
+__notes from call with chris__
+-  explain gramine-ratls and how it's used in this demo
+-  how would someone compute an MR_ENCLAVE value on their own (with or without SGX)
+-  don't just print the sigstruct hash, loop in the tlsnotary extension and add a plugin that fetches the hash from the tlsnotary github repo (also add the mrenclave of the mainline notary server to the readme.md)
