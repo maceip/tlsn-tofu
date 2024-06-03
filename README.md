@@ -83,7 +83,7 @@ tofu destroy
         5. Quoting Enclave talks to the Provisioning Certification Enclave (PCE)
         6. The PCE uses another Intel service called Intel Provisioning Certification Service (PCS) to obtain the attestation collateral. This collateral comprises attestation certificates and certificate revocation lists for the SGX machine
         7. When the SGX quote arrives, the user compares the certificates embedded in the quote against these cached certificates
-    - for more information, consult the [Gramine docs](https://gramine.readthedocs.io/en/stable/attestation.html)
+    - for more information, consult the [Gramine docs](https://gramine.readthedocs.io/en/stable/attestation.html)    <img src="./ratls.png" width=608 />
 
 -   How do I create my own MR_ENCLAVE signature, to see if it matches the signature I get back from SGX Remote Attestation?
     -   Since we are using gramine, this will be a gramine specific answer: You dont even need SGX hardware to create your own MR_ENCLAVE signature. You can clone the SGX-TLSNotary-Server repo, and build it with SGX=0, which tells gramine to emulate SGX. The build ouput will incluide a .sig, and you can check the MR_ENCLAVE value by running gramine-sgx-sigstruct-view.
