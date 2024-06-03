@@ -9,9 +9,9 @@
 </p>  
 
 tlsn-tofu was born as a reference for simple and secure infra for tlsnotary to leverage secure enclaves, and to demonstrate how to use their most important (and complex) feature: remote attestation!
-
-### quick start:
-
+<details>
+<summary><h2>quick start:</h2></summary>
+    
 clone this repo; cd into it, then: 
 #### 1) install azure cli:
 - mac:
@@ -68,6 +68,25 @@ tofu destroy
 ```
 
 #### 8) confetti: 🎉you just ran a tlsnotary verifier inside a TEE!🎉
+</details>
+
+### FAQ
+-   How does Remote Attestation work?
+    -   In this repo we are running the [SGX-TLSNotary-Server](https://github.com/maceip/sgx-tlsn-notary-server) repo inside the TEE, which is a repo using the vanilla TLSNotary Server with a Gramine specific manifest *and* loaded with the [Gramine-RATLS wrapper](https://gramine.readthedocs.io/en/stable/manpages/gramine-ratls.html). Gramine RATLS is a shim that is loaded in the TEE first, and sets up a modified TLS server that implements RATLS.
+
+    -   the steps are as follows:
+
+        1.  the enclavized user application opening the special file ```/dev/attestation/user_report_data``` for write
+        2. gramine uses the EREPORT hardware instruction to generate an SGX Report
+        3. After the SGX report is generated, the application opens another special file ```/dev/attestation/quote``` for read 
+        4. Under the hood, Gramine communicates with the Quoting Enclave to receive the SGX Quote
+        5. Quoting Enclave talks to the Provisioning Certification Enclave (PCE)
+        6. The PCE uses another Intel service called Intel Provisioning Certification Service (PCS) to obtain the attestation collateral. This collateral comprises attestation certificates and certificate revocation lists for the SGX machine
+        7. When the SGX quote arrives, the user compares the certificates embedded in the quote against these cached certificates
+    - for more information, consult the [Gramine docs](https://gramine.readthedocs.io/en/stable/attestation.html)
+
+-   How do I create my own MR_ENCLAVE signature, to see if it matches the signature I get back from SGX Remote Attestation?
+    -   Since we are using gramine, this will be a gramine specific answer: You dont even need SGX hardware to create your own MR_ENCLAVE signature. You can clone the SGX-TLSNotary-Server repo, and build it with SGX=0, which tells gramine to emulate SGX. The build ouput will incluide a .sig, and you can check the MR_ENCLAVE value by running gramine-sgx-sigstruct-view.
 ### TODO
 - [x] Azure
 - [x] Azure THIM DCAP
