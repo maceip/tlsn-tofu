@@ -72,7 +72,7 @@ tofu destroy
 
 ### FAQ
 
--   How do I create my own MR_ENCLAVE signature, to see if it matches the signature I get back from SGX Remote Attestation?
+-   ***How do I generate my own MR_ENCLAVE signature, to see if it matches the signature I get back from SGX Remote Attestation?***
     -   Follow these steps to create a local measurement without SGX: ___ensure you have gramine, rust, and openssl-dev on the host you are using___:
         -   ```git clone https://github.com/maceip/sgx-tlsn-notary-server```
         -   ```cd sgx-tlsn-notary-server```
@@ -87,8 +87,10 @@ tofu destroy
               isv_prod_id: 0
               isv_svn: 0
               debug_enclave: False
-              ```  
--   How does Remote Attestation work?
+              ```
+    -   if you rm -rf the directory and run the steps again, the mr_enclave value will be the same
+
+-   ***How does Remote Attestation work?***
     -   In this repo we are running the [SGX-TLSNotary-Server](https://github.com/maceip/sgx-tlsn-notary-server) repo inside the TEE, which is a repo using the vanilla TLSNotary Server with a Gramine specific manifest *and* loaded with the [Gramine-RATLS wrapper](https://gramine.readthedocs.io/en/stable/manpages/gramine-ratls.html). Gramine RATLS is a shim that is loaded in the TEE first, and sets up a modified TLS server that implements RATLS.
 
     -   the steps are as follows:
