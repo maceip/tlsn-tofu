@@ -47,7 +47,7 @@ resource "azurerm_network_interface" "main" {
   ip_configuration {
     name                          = "internal"
     subnet_id                     = azurerm_subnet.internal.id
-    private_ip_address_allocation = "Dynamic"
+    private_ip_address_allocation = "Static"
     public_ip_address_id          = azurerm_public_ip.main.id
   }
 }
@@ -56,28 +56,12 @@ resource "azurerm_public_ip" "main" {
   name                = "${var.resource_group_name_prefix}-verifier-address"
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
-  allocation_method   = "Dynamic"
-}
-
-resource "azurerm_network_interface" "prover" {
-  name                = "${var.resource_group_name_prefix}-prover-nic"
-  resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
-
-  ip_configuration {
-    name                          = "internal"
-    subnet_id                     = azurerm_subnet.internal.id
-    private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.prover.id
+  allocation_method   = "Static"
+   lifecycle {
+    create_before_destroy = true
   }
 }
 
-resource "azurerm_public_ip" "prover" {
-  name                = "${var.resource_group_name_prefix}-prover-address"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
-  allocation_method   = "Dynamic"
-}
 
 
 resource "azurerm_linux_virtual_machine" "main" {
@@ -113,60 +97,16 @@ resource "azurerm_linux_virtual_machine" "main" {
   }
 }
 
-resource "azurerm_linux_virtual_machine" "prover" {
-  name                = "${var.resource_group_name_prefix}-prover-vm"
-  resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
-  size                = "Standard_B2ms"
-  admin_username      = "ubuntu"
-  computer_name       = "${var.resource_group_name_prefix}-prover-vm"
-  network_interface_ids = [
-    azurerm_network_interface.prover.id,
-  ]
 
-  admin_ssh_key {
-    username   = "ubuntu"
-        public_key =  tls_private_key.ssh.public_key_openssh 
-  }
-
-  source_image_reference {
-    publisher = "Canonical"
-    offer     = "0001-com-ubuntu-server-jammy"
-    sku       = "22_04-lts-gen2"
-    version   = "latest"
-  }
-
-  os_disk {
-    storage_account_type = "Standard_LRS"
-    caching              = "ReadWrite"
-  }
-
-    lifecycle {
-    create_before_destroy = true
-  }
-}
 
 output "verifier_ip_address" {
   value = azurerm_public_ip.main.ip_address
 }
 
-output "prover_ip_address" {
-  value = azurerm_public_ip.prover.ip_address
-}
 
 resource "ansible_host" "verifier" {
   name                = azurerm_public_ip.main.ip_address
   groups = ["sgx", "verifier"]
-  variables = {
-    ansible_user                 = "ubuntu",
-    ansible_ssh_private_key_file = "~/.ssh/${var.resource_group_name_prefix}-sshkey.pem",
-    ansible_python_interpreter   = "/usr/bin/python3",
-  }
-}
-
-resource "ansible_host" "prover" {
-  name                = azurerm_public_ip.prover.ip_address
-  groups = ["sgx","prover"]
   variables = {
     ansible_user                 = "ubuntu",
     ansible_ssh_private_key_file = "~/.ssh/${var.resource_group_name_prefix}-sshkey.pem",

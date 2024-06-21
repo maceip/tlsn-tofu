@@ -4,67 +4,55 @@
   become: true
   gather_facts: false
   tasks:
-    - wait_for_connection:
-
-    - setup:
-
     - name: rustup installer
       become: true
       become_user: ubuntu
       get_url:
         url: https://sh.rustup.rs
         dest: ~/sh.rustup.rs
-        mode: "0755"
-        force: "yes"
-      tags:
-        - rust
+        mode: '0755'
+        force: 'yes'
+      tags: [rust]
     - name: install rust/cargo
       become: true
       become_user: ubuntu
       shell: ~/sh.rustup.rs -y
-      tags:
-        - rust
+      tags: [rust]
     - name: Update and upgrade apt packages
       become: true
       apt:
-        upgrade: yes
-        update_cache: yes
-        cache_valid_time: 172800 #two days
-
+        upgrade: true
+        update_cache: true
+        cache_valid_time: 172800  # two days
 - name: Install deps on verifier
   hosts: verifier
   become: true
   gather_facts: false
-  tasks:  
+  tasks:
     - name: Add intel Apt signing key, uses whichever key is at the URL
       ansible.builtin.apt_key:
         url: https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key
         state: present
-
     - name: Add gramine Apt signing key, uses whichever key is at the URL
       ansible.builtin.apt_key:
         url: https://packages.gramineproject.io/gramine-keyring.gpg
         state: present
-
     - name: Add intel repository into sources list
       ansible.builtin.apt_repository:
         repo: deb [arch=amd64] https://download.01.org/intel-sgx/sgx_repo/ubuntu jammy main
         state: present
-
     - name: Add gramine repository into sources list
       ansible.builtin.apt_repository:
         repo: deb [arch=amd64] https://packages.gramineproject.io/ jammy main
         state: present
-
-    - name: Update and upgrade apt packages
+    - name: Update and upgrade apt packagess
       become: true
       apt:
-        update_cache: yes
-
+        update_cache: true
     - name: install libs
       become: true
       apt:
-        allow_downgrades: yes
+        allow_downgrades: true
         pkg:
           - libsgx-dcap-ql
           - libsgx-dcap-default-qpl=1.16.100.2-jammy1
@@ -74,19 +62,17 @@
           - clang
           - sqlite3
           - libsgx-dcap-quote-verify-dev
-
+          - cargo
     - name: use azure PCCS
       ansible.builtin.copy:
         src: azure/sgx_default_qcnl.conf
         dest: /etc/sgx_default_qcnl.conf
         owner: root
         group: root
-
     - name: restart aesmd service
       become: true
       ansible.builtin.shell:
         cmd: systemctl restart aesmd.service
-
     - name: check for SGX support
       command: is-sgx-available
       ignore_errors: true
@@ -108,26 +94,25 @@
       git:
         repo: https://github.com/maceip/sgx-tlsn-notary-server.git
         dest: /home/ubuntu/sgx-tlsn-notary-server
-        clone: yes
-        update: yes
-        force: yes
+        clone: true
+        update: true
+        force: true
     - name: make repo
       become: true
       become_user: ubuntu
       environment:
-        SGX: "1"
-        PATH: "/home/ubuntu/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:{{ ansible_env.PATH }}"
+        SGX: '1'
+        PATH: '/home/ubuntu/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:{{ ansible_env.PATH }}'
       command: make
       args:
         chdir: /home/ubuntu/sgx-tlsn-notary-server
       register: makestatus
-
     - name: load sigstruct
       become: true
       become_user: ubuntu
       environment:
-        SGX: "1"
-        PATH: "/home/ubuntu/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:{{ ansible_env.PATH }}"
+        SGX: '1'
+        PATH: /home/ubuntu/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:{{ ansible_env.PATH }}
       command: gramine-sgx-sigstruct-view --output-format=toml sgx-notary-server.sig
       args:
         chdir: /home/ubuntu/sgx-tlsn-notary-server
@@ -137,12 +122,12 @@
         msg: Notary Build Status {{ makestatus }} Sigstruct {{ sigstruct }}
       when: makestatus is defined
     - name: run verifier
-      async: 1000 # run verifier for 16 minutes
+      async: 1000  # run verifier for 16 minutes
       poll: 0
       become: true
       environment:
-        SGX: "1"
-        PATH: "/home/ubuntu/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:{{ ansible_env.PATH }}"
+        SGX: '1'
+        PATH: /home/ubuntu/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:{{ ansible_env.PATH }}
       command: gramine-sgx sgx-notary-server
       args:
         chdir: /home/ubuntu/sgx-tlsn-notary-server
@@ -151,78 +136,4 @@
       ansible.builtin.async_status:
         jid: '{{ verifierstatus.ansible_job_id }}'
         mode: cleanup
-- name: Install deps on prover
-  hosts: prover
-  become: true
-  gather_facts: false
-  tasks:  
-    - name: Add intel Apt signing key, uses whichever key is at the URL
-      ansible.builtin.apt_key:
-        url: https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key
-        state: present
 
-    - name: Add gramine Apt signing key, uses whichever key is at the URL
-      ansible.builtin.apt_key:
-        url: https://packages.gramineproject.io/gramine-keyring.gpg
-        state: present
-
-    - name: Add intel repository into sources list
-      ansible.builtin.apt_repository:
-        repo: deb [arch=amd64] https://download.01.org/intel-sgx/sgx_repo/ubuntu jammy main
-        state: present
-
-    - name: Add gramine repository into sources list
-      ansible.builtin.apt_repository:
-        repo: deb [arch=amd64] https://packages.gramineproject.io/ jammy main
-        state: present
-
-    - name: Update and upgrade apt packages
-      become: true
-      apt:
-        update_cache: yes
-
-    - name: install libs
-      become: true
-      apt:
-        allow_downgrades: yes
-        pkg:
-          - cmake
-          - clang
-          - libssl-dev 
-    - name: clone notary server
-      become: true
-      become_user: ubuntu
-      ignore_errors: true
-      git:
-        repo: https://github.com/tlsnotary/tlsn.git
-        dest: /home/ubuntu/tlsn
-        clone: yes
-        update: yes
-        force: yes
-        single_branch: yes
-        version: dev
-    - name: set notary host
-      ansible.builtin.lineinfile:
-         path: /home/ubuntu/tlsn/tlsn/examples/twitter/twitter_dm.rs
-         regexp: '^const NOTARY_HOST'
-         line: 'const NOTARY_HOST: &str = "74.235.218.81";' #fixme: get the verifier ip from terraform
-    - name: set env
-      become: true
-      become_user: ubuntu
-      environment:
-        PATH: "/home/ubuntu/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:{{ ansible_env.PATH }}"
-      command: cp .env.example .env
-      args:
-        chdir: /home/ubuntu/tlsn/tlsn/examples/twitter
-      register: envcopy
-    - name: run prover
-      become: true
-      become_user: ubuntu
-      environment:
-        SGX: "1"
-        RUST_LOG: "debug,yamux=info"
-        PATH: "/home/ubuntu/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:{{ ansible_env.PATH }}"
-      command: cargo run --release --example twitter_dm
-      args:
-        chdir: /home/ubuntu/tlsn/tlsn/examples/twitter
-      register: twitterstatus
